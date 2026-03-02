@@ -47,11 +47,14 @@ pipeline {
     }
 
     stage('Publish Coverage Report') {
-            steps {
-                recordCoverage tools: [
-                    coverageAdapter('jacoco', 'target/site/jacoco/jacoco.xml')
-                ]
-            }
+        steps {
+            recordCoverage tools: [
+                coverage(
+                    tool: jacoco(),
+                    pattern: 'target/site/jacoco/jacoco.xml'
+                )
+            ]
+        }
     }
 
     stage('Build Docker Image') {
