@@ -48,12 +48,14 @@ pipeline {
 
     stage('Publish Coverage Report') {
         steps {
-            recordCoverage tools: [
-                coverage(
-                    tool: jacoco(),
-                    pattern: 'target/site/jacoco/jacoco.xml'
-                )
-            ]
+            recordCoverage(
+                tools: [
+                    [
+                        parser: 'JACOCO',
+                        pattern: 'target/site/jacoco/jacoco.xml'
+                    ]
+                ]
+            )
         }
     }
 
