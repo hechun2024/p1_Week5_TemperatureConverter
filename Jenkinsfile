@@ -1,58 +1,73 @@
 pipeline {
-    agent any
+  agent any
 
-    tools {
-        maven 'Maven'
+  tools {
+    maven 'Maven'
+  }
+
+  environment {
+    // Mac 的 docker 路径
+    PATH = "/usr/local/bin:${env.PATH}"
+
+    DOCKERHUB_CREDENTIALS_ID = 'docker-hub-cred'
+    DOCKERHUB_REPO = 'hechun202601/p1_week5_temperatureconverter'
+    DOCKER_IMAGE_TAG = 'latest'
+  }
+
+ stages{
+
+    stage('check'){
+        steps {
+            git url: 'https://github.com/hechun2024/p1_Week5_TemperatureConverter.git'
+       }
     }
 
-    environment {
-        DOCKERHUB_CREDENTIALS_ID = 'docker-hub-cred'
-        DOCKERHUB_REPO = 'hechun202601/p1_week5_temperatureconverter'
-        DOCKER_IMAGE_TAG = 'latest'
+    stage('build job: '){
+        steps {
+          sh 'mvn clean install'
+        }
     }
 
-    stages {
+    stage('test'){
+        steps {
+          sh 'mvn test'
+        }
+    }
 
-        stage('Build') {
+    stage('Report'){
+        steps {
+             sh 'mvn jacoco:report'
+        }
+    }
+
+    stage('Publish Test Results') {
+           steps {
+              junit '**/target/surefire-reports/*.xml'
+           }
+    }
+
+    stage('Publish Coverage Report') {
             steps {
-                sh 'mvn clean install'
+                jacoco()
+            }
+    }
+
+    stage('Build Docker Image') {
+        steps {
+            script {
+                docker.build("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}")
             }
         }
+    }
 
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
-        stage('Code Coverage') {
-            steps {
-                sh 'mvn jacoco:report'
-            }
-        }
-
-        stage('Publish Test Results') {
-            steps {
-                junit '**/target/surefire-reports/*.xml'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}")
+    stage('Push Docker Image to Docker Hub') {
+        steps {
+            script {
+                docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
+                    docker.image("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}").push()
                 }
             }
         }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('', DOCKERHUB_CREDENTIALS_ID) {
-                        docker.image("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}").push()
-                    }
-                }
-            }
-        }
     }
+ }
 }
