@@ -48,7 +48,9 @@ pipeline {
 
     stage('Publish Coverage Report') {
             steps {
-                recordCoverage tools: [jacoco(pattern: 'target/site/jacoco/jacoco.xml')]
+                recordCoverage tools: [
+                    coverageAdapter('jacoco', 'target/site/jacoco/jacoco.xml')
+                ]
             }
     }
 
