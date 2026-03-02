@@ -54,18 +54,23 @@ pipeline {
 
     stage('Build Docker Image') {
         steps {
-            script {
-                docker.build("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}")
-            }
+            sh """
+            /usr/local/bin/docker build -t ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG} .
+            """
         }
     }
 
     stage('Push Docker Image to Docker Hub') {
         steps {
-            script {
-                docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
-                    docker.image("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}").push()
-                }
+            withCredentials([usernamePassword(
+                credentialsId: DOCKERHUB_CREDENTIALS_ID,
+                usernameVariable: 'DOCKER_USER',
+                passwordVariable: 'DOCKER_PASS'
+            )]) {
+                sh """
+                echo $DOCKER_PASS | /usr/local/bin/docker login -u $DOCKER_USER --password-stdin
+                /usr/local/bin/docker push ${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}
+                """
             }
         }
     }
