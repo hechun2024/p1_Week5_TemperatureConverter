@@ -5,6 +5,12 @@ pipeline {
         maven 'Maven'
     }
 
+    environment {
+        DOCKERHUB_CREDENTIALS_ID = 'docker-hub-cred'
+        DOCKERHUB_REPO = 'hechun202601/p1_week5_temperatureconverter'
+        DOCKER_IMAGE_TAG = 'latest'
+    }
+
     stages {
 
         stage('Build') {
@@ -31,5 +37,22 @@ pipeline {
             }
         }
 
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}")
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('', DOCKERHUB_CREDENTIALS_ID) {
+                        docker.image("${DOCKERHUB_REPO}:${DOCKER_IMAGE_TAG}").push()
+                    }
+                }
+            }
+        }
     }
 }
